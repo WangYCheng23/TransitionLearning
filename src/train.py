@@ -96,7 +96,7 @@ class IterDataset(torch.utils.data.IterableDataset):
         else:
             return csv_files[:self.args_dict["world_model_data_file_max_num"]]
 
-    def collect_df(self, csv_files, num_workers=40):
+    def collect_df(self, csv_files, num_workers=16):
         with ThreadPoolExecutor(max_workers=num_workers) as executor:
             outputs = list(tqdm(executor.map(self.get_df, csv_files), total=len(csv_files)))
         return outputs

@@ -27,8 +27,8 @@ def readParser():
     parser.add_argument('--world_model_datalaoder_batch_size', type=int, default=100000, metavar='A', help='the number of the data fetched by the dataloader in one batch')
     # delta raw
     parser.add_argument('--world_model_output', type=str, default="delta", help='delta or raw')
-    parser.add_argument('--world_model_train_batch_size', type=int, default=64, metavar='A', help='batch size for training world model')
-    parser.add_argument('--world_model_learning_rate', type=float, default=1e-5, metavar='A', help='learning rate for training world model')
+    parser.add_argument('--world_model_train_batch_size', type=int, default=128, metavar='A', help='batch size for training world model')
+    parser.add_argument('--world_model_learning_rate', type=float, default=5.8e-6, metavar='A', help='learning rate for training world model')
     parser.add_argument('--world_model_local_data_shuffle_num', type=int, default=1e5, metavar='A', help='local data shuffle num')
     parser.add_argument('--world_model_clip_grad_norm', type=float, default=1.0, metavar='A', help='clip grad norm')
     parser.add_argument('--epochs', type=int, default=None, metavar='A', help='epochs for training world model')
