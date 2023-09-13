@@ -416,7 +416,8 @@ class DynamicsModel():
         
         # real_current_end_effector_coornidates = excavator_arm_fk(real_current_state[:,0:3])
         
-        end_distance = torch.norm((predict_next_state-real_next_state), p=2, dim=-1)
+        loss_pos = torch.norm((predict_next_state[:3]-real_next_state[:3]), p=2, dim=-1)
+        loss_vel = torch.norm((predict_next_state[3:]-real_next_state[3:]), p=2, dim=-1)
         # real_end_distance = torch.norm((real_next_state-real_current_state), p=2, dim=-1)
         # end_distance_ratio = end_distance/(real_end_distance+1e-3)
         
@@ -429,7 +430,7 @@ class DynamicsModel():
         
         # predict_end_location_dis_2norm = torch.norm(real_next_state - predict_next_state, dim=-1)
         # loss = 0.5 * torch.mean(torch.pow(predict_end_location_dis_2norm, 2))
-        loss = torch.mean(end_distance)
+        loss = 0.6*torch.mean(loss_pos)+0.4*torch.mean(loss_vel)
         return loss
 
     def get_current_and_next_states(self, real_current_s, real_next_s, prediction_s, attention_mask):
