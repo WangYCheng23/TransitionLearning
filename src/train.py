@@ -493,7 +493,7 @@ class DynamicsModel():
                       f"train_dataset len: {len(train_dataset)}, time for get one batch data: {time.time() - get_batch_start_time} seconds")
                 epoch_log_dict = {}
                 # TODO:修改mini_epoch
-                for mini_epoch in range(4):
+                for mini_epoch in range(1):
                     mini_batch_cost_samples = 0
                     for train_data_idx in range(math.ceil(max_data_num / batch_size)):
                         self.model.train()
