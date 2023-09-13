@@ -104,7 +104,7 @@ class WorldModelDecisionTransformerModel(DecisionTransformerModel):
 state_size = 6
 action_time_dim = 2
 action_size = 3
-pred_hidden_size = 256
+pred_hidden_size = 512
 n_head = 1
 data_type = 'delta'
 model_config = DecisionTransformerConfig(state_dim=state_size+action_time_dim,
