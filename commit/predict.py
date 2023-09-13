@@ -162,6 +162,9 @@ def state_predict(states:torch.Tensor, actions:torch.Tensor, timesteps:torch.Ten
 
     """
     # note: 由于输入的是数据集中的原始数据，因此如果在训练过程中对数据做了归一化处理，则需要在该函数中对数据做归一化处理
+    
+    max_seq_length = 512
+    
     for index, key in enumerate(state_columns):
         value = states[:,:,index]
         type, joint = key.split('_')
@@ -175,21 +178,20 @@ def state_predict(states:torch.Tensor, actions:torch.Tensor, timesteps:torch.Ten
         actions[:,:,index] = ((value - pwm_min_max[joint]["positive"][0]) / (pwm_min_max[joint]["positive"][1] - pwm_min_max[joint]["positive"][0]) * (value > 0)
                             + (value - pwm_min_max[joint]["negative"][0]) / (pwm_min_max[joint]["negative"][1] - pwm_min_max[joint]["negative"][0]) * (value < 0))
         
-    states = states.to(device)
-    actions = actions.to(device)     
-    timesteps = timesteps.to(device)
-    masks = masks.to(device)
+    states = states[:, -max_seq_length:,:].to(device)
+    actions = actions[:, -max_seq_length:,:].to(device)
+    timesteps = timesteps[:, -max_seq_length:].to(device)
+    masks = masks[:, -max_seq_length:].to(device)
     model.to(device)
     model_output = model(states, actions, timesteps, masks)
-    next_states = model_output['state_preds']   #对下一个state的预测值 [batch_size,20,states_num]
+    next_state = model_output['state_preds'][:,-1,:].unsqueeze(1)
     
     # # 如果acion都为0， 上一秒的pos_state和下一秒的pos_state不变
     # bool_zero_action_filter = (actions==0)
     # inv_bool_zero_action_filter = ~bool_zero_action_filter
     # filtered_next_states_pos = bool_zero_action_filter.long()*states[:,:,:3] + inv_bool_zero_action_filter.long()*next_states[:,:,:3]
     # next_states[:,:,:3] = filtered_next_states_pos
-    
-    next_state = next_states[:,-1,:].unsqueeze(1)
+
     
     # 如果输出的是归一化后的数据，则需要做逆归一化的操作
     for index, key in enumerate(state_columns):
