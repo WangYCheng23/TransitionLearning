@@ -6,6 +6,7 @@ import torch
 from typing import Tuple, Union
 from transformers.models.decision_transformer.modeling_decision_transformer import DecisionTransformerOutput
 import math
+from pathlib import Path
 
 
 class WorldModelDecisionTransformerModel(DecisionTransformerModel):
@@ -118,7 +119,7 @@ model_config = DecisionTransformerConfig(state_dim=state_size+action_time_dim,
                                          data_type=data_type)
 model = WorldModelDecisionTransformerModel(model_config)
 
-saved_pth = torch.load(os.path.join((__file__)[:(__file__).rfind('/')], 'world_model_.pth'))
+saved_pth = torch.load(os.path.join(Path(__file__).parent.resolve(), 'world_model_.pth'))
 model.load_state_dict(saved_pth['model_state'])
 pos_min_max_dic = {'boom': [-math.pi, math.pi], 'arm': [-math.pi, math.pi],
                         'bucket': [-math.pi, math.pi], 'swing': [-math.pi, math.pi]}
