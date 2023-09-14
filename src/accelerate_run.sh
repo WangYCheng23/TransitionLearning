@@ -1,1 +1,1 @@
-nohup accelerate launch ./train.py --epochs 20 --world_model_loss_scale last --load_world_model "/home/WorldModelTrainer-Dev/ckpt/world_model-75.39.pth" > ../logs/runoob.log 2>&1 &
+nohup accelerate launch ./train.py --epochs 20 --world_model_loss_scale last --load_world_model "/home/WorldModelTrainer-Dev/ckpt/world_model-80.50.pth" > ../logs/runoob.log 2>&1 &

@@ -13,11 +13,14 @@ ___*
 .envrc
 .direnv
 *.json
-dataset
-# dataset/stage1_data/*
-# dataset/stage2_data/*
+dataset/stage1_data/*
+dataset/stage2_data/*
+!dataset/stage1_data/.gitkeep
+!dataset/stage2_data/.gitkeep
 src/world_models/*
 logs/*
+!logs/.gitkeep
 results
 ckpt/*
+!ckpt/.gitkeep
 commit/*.pth
