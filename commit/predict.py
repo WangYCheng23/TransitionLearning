@@ -163,7 +163,7 @@ def state_predict(states:torch.Tensor, actions:torch.Tensor, timesteps:torch.Ten
     """
     # note: 由于输入的是数据集中的原始数据，因此如果在训练过程中对数据做了归一化处理，则需要在该函数中对数据做归一化处理
     
-    max_seq_length = 512
+    max_seq_length = 20
     
     for index, key in enumerate(state_columns):
         value = states[:,:,index]

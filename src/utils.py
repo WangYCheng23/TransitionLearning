@@ -20,15 +20,15 @@ def readParser():
     parser.add_argument('--joint_name', type=str, default='boom_arm_swing', metavar='A', help='joint_name')
     # env setting for state seq data
     parser.add_argument('--state_seq_length', type=int, default=512)
-    parser.add_argument('--state_round_num', type=int, default=7, help='number of rounds for state seq data')
+    parser.add_argument('--state_round_num', type=int, default=8, help='number of rounds for state seq data')
     parser.add_argument('--world_model_type', type=str, default="dt", help='world model type: dt')
     parser.add_argument('--world_model_data_file_max_num', type=int, default=-1, help='max file num of the data')
     parser.add_argument('--world_model_train_data_max_size', type=int, default=-1, help='world_model_train_data_max_size')
-    parser.add_argument('--world_model_datalaoder_batch_size', type=int, default=100000, metavar='A', help='the number of the data fetched by the dataloader in one batch')
+    parser.add_argument('--world_model_datalaoder_batch_size', type=int, default=124000, metavar='A', help='the number of the data fetched by the dataloader in one batch')
     # delta raw
     parser.add_argument('--world_model_output', type=str, default="delta", help='delta or raw')
     parser.add_argument('--world_model_train_batch_size', type=int, default=128, metavar='A', help='batch size for training world model')
-    parser.add_argument('--world_model_learning_rate', type=float, default=5.8e-6, metavar='A', help='learning rate for training world model')
+    parser.add_argument('--world_model_learning_rate', type=float, default=3.9e-5, metavar='A', help='learning rate for training world model')
     parser.add_argument('--world_model_local_data_shuffle_num', type=int, default=1e5, metavar='A', help='local data shuffle num')
     parser.add_argument('--world_model_clip_grad_norm', type=float, default=1.0, metavar='A', help='clip grad norm')
     parser.add_argument('--epochs', type=int, default=None, metavar='A', help='epochs for training world model')

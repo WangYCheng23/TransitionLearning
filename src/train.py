@@ -1,5 +1,6 @@
 import inspect
 import os
+from pathlib import Path
 import time
 import random
 import itertools
@@ -21,6 +22,7 @@ from transformers import DecisionTransformerConfig, DecisionTransformerModel, De
 from accelerate import Accelerator
 from accelerate import DistributedDataParallelKwargs
 from utils import excavator_arm_fk, get_env, readParser
+from torch.utils.tensorboard import SummaryWriter
 
 ddp_kwargs = DistributedDataParallelKwargs(find_unused_parameters=True)
 accelerator = Accelerator(kwargs_handlers=[ddp_kwargs])
@@ -179,6 +181,7 @@ class IterDataset(torch.utils.data.IterableDataset):
         # 截取df，只取前2**16行,这是timestamp的最大值
         if len(df) > 2**16:
             df = df.iloc[:2**16]
+        #TODO: 添加mask
         df["attention_mask"] = 1
         df["reward"] = 0
         df["done"] = 0
@@ -395,7 +398,7 @@ class DynamicsModel():
         self.model, self.model_optimizer, self.model_lr_scheduler = accelerator.prepare(self.model, 
                                                                                         self.model_optimizer, 
                                                                                         self.model_lr_scheduler)
-
+        self.SummaryWriter = SummaryWriter(os.path.join(Path(__file__).parent.parent,'logs'))
 
     def rad_norm(self, pos_states):
         # convert the rad to -math.pi ~ math.pi
@@ -495,12 +498,13 @@ class DynamicsModel():
             print(f"[{datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}][EnsembleDynamicsModel] "
                   f"Set test_frequency every {test_frequency} batches, {test_frequency * (math.ceil(max_data_num/batch_size) * batch_size)} samples.")
             # 循环读取数据
+            # 1.大batch
             for s, a, r, next_s, d, rtg, timesteps, mask in train_dataloader:
                 print(f"[{datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}][EnsembleDynamicsModel] global rank/global world size: "
                       f"{global_rank}/{global_world_size}, epoch: {epoch}, train input shape: {s.shape}, train label shape: {s.shape}, "
                       f"train_dataset len: {len(train_dataset)}, time for get one batch data: {time.time() - get_batch_start_time} seconds")
                 epoch_log_dict = {}
-                # TODO:修改mini_epoch
+                # 2.小batch
                 for mini_epoch in range(1):
                     mini_batch_cost_samples = 0
                     for train_data_idx in range(math.ceil(max_data_num / batch_size)):
@@ -533,6 +537,7 @@ class DynamicsModel():
                             mini_batch_cost_samples += batch_size * num_processes
                             epoch_log_dict = self.updata_log_dict(epoch_log_dict, {"train_mse_losses": loss.detach().cpu().numpy().item()})
                             log_str = self.log2str(epoch_log_dict, mode="train")
+                            self.SummaryWriter.add_scalar('loss',loss.detach().cpu().numpy().item(), (batch_cnt+1)*(mini_epoch))
                             print(f"[{datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}][EnsembleDynamicsModel] epoch {epoch},"
                                   f'batch_cnt {batch_cnt}, mini epoch {mini_epoch}, {log_str},'
                                   f'training costs samples num {mini_batch_cost_samples} / {s.shape[0] * global_world_size}')
@@ -594,7 +599,7 @@ class DynamicsModel():
                 get_batch_start_time = time.time()
             if accelerator.is_main_process:
                 self.model_lr_scheduler.step()
-
+    
     def save_accelerate_model(self, force_save=False):
         if self.total_cost_sequences - self.last_save_model_cost_sequences < self.arg_dict["save_model_interval"] and not force_save:
             print(f"Break but not saved, total_cost_sequences {self.total_cost_sequences}, "
@@ -634,7 +639,9 @@ class DynamicsModel():
                 new_state_dict[new_key] = value
             new_cpkt[k] = new_state_dict
         self.model.load_state_dict(new_cpkt['model_state'])
+        print('='*50)
         print(f"Load world model from {world_model_path} successfully.")
+        print('='*50)
 
     def updata_log_dict(self, old_log_dict, new_log_dict):
         for key, value in new_log_dict.items():
@@ -697,7 +704,8 @@ def main_accelerate():
     env_model.env = world_model_env
 
     env_model.accelerate_distributed_train(train_csv_file_names, train_dfs_map,
-                                           test_csv_file_names, test_dfs_map, world_model_datalaoder_batch_size,
+                                           test_csv_file_names, test_dfs_map, 
+                                           world_model_datalaoder_batch_size,
                                            args.world_model_train_batch_size, **kwargs)
 
     accelerator.wait_for_everyone()

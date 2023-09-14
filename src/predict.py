@@ -132,7 +132,7 @@ pwm_min_max = {'boom': {"negative": [-800, -250], "positive": [250, 800]},
 
 def state_predict(states, actions, timesteps, masks, device, state_columns, action_columns):
     
-    max_seq_length = 512
+    max_seq_length = 20
     
     # note: 由于输入的是数据集中的原始数据，因此如果在训练过程中对数据做了归一化处理，则需要在该函数中对数据做归一化处理
     for index, key in enumerate(state_columns):
