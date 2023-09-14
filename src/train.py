@@ -16,6 +16,7 @@ from itertools import accumulate
 from typing import Tuple, Union
 from transformers.models.decision_transformer.modeling_decision_transformer import DecisionTransformerOutput
 from concurrent.futures import ThreadPoolExecutor
+from joblib import Parallel, delayed
 from transformers import DecisionTransformerConfig, DecisionTransformerModel, DecisionTransformerGPT2Model
 from accelerate import Accelerator
 from accelerate import DistributedDataParallelKwargs
@@ -56,6 +57,13 @@ class IterDataset(torch.utils.data.IterableDataset):
         print(f"[{datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}]"
               f"[IterableDataset] Get iterator for global_rank/global world size: "
               f"{self.global_rank}/{self.global_world_size}")
+        
+    ############################数据文件路径############################   
+    def _get_data_dir(self):
+        from pathlib import Path
+        data_path = os.path.join(Path(__file__).absolute().parent.parent, 'dataset/stage2_data', )
+        return data_path 
+        
     ############################收集数据文件############################
     def pre_load_csvs(self):
         self.dfs_map = {}
@@ -72,16 +80,12 @@ class IterDataset(torch.utils.data.IterableDataset):
         self.total_data_size = sum([len(df) for df in self.dfs_map[self.mode]])
         print(f"Total {self.mode} data: {self.total_data_size} / {total_data_size}")
 
-    def _get_data_dir(self):
-        from pathlib import Path
-        data_path = os.path.join(Path(__file__).absolute().parent.parent, 'dataset/stage2_data', )
-        return data_path
-
     def get_folders(self, path):
         folders = [name for name in os.listdir(path) if os.path.isdir(os.path.join(path, name))]
         folders = [folder for folder in folders]
         return folders
 
+    # 1.收集csv
     def get_all_csvfiles(self, mode):
         data_path = os.path.join(self.data_dir, mode)
         data_path_list = self.get_folders(data_path)
@@ -95,10 +99,12 @@ class IterDataset(torch.utils.data.IterableDataset):
             return csv_files
         else:
             return csv_files[:self.args_dict["world_model_data_file_max_num"]]
-
+        
+    # 2.收集df
     def collect_df(self, csv_files, num_workers=16):
         with ThreadPoolExecutor(max_workers=num_workers) as executor:
             outputs = list(tqdm(executor.map(self.get_df, csv_files), total=len(csv_files)))
+        # outputs = Parallel(n_jobs=num_workers)(delayed(self.get_df)(csv_file) for csv_file in tqdm(csv_files))
         return outputs
 
     def get_df(self, csv_file):
@@ -112,6 +118,7 @@ class IterDataset(torch.utils.data.IterableDataset):
             else:
                 raise ValueError(f"nan in {csv_file}")
         return df
+    
     ############################收集文件内数据############################
     def get_data(self):
         """
